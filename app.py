@@ -14,11 +14,17 @@ st.title("🎬 Bot de Ingeniería de Contenido & Guiones — Fortezza Perfums")
 st.subheader("Ingeniería inversa de videos virales + Plantillas de guiones por demanda")
 
 # ---------------------------------------------------------
-# BARRA LATERAL (CONFIGURACIÓN Y NUEVO CHAT)
+# API KEY FIJA (Ya no te la pedirá en pantalla)
+# ---------------------------------------------------------
+# Pega tu clave de Google AI Studio dentro de las comillas:
+gemini_key = "AQ.Ab8RN6KqtQH1G_UMEsV9n3agov-cVxG-5RdHFYMxBqT-55s-Ew"
+
+# ---------------------------------------------------------
+# BARRA LATERAL (GESTIÓN DE SESIÓN)
 # ---------------------------------------------------------
 with st.sidebar:
-    st.header("🔑 Configuración")
-    gemini_key = st.text_input("Gemini API Key", type="password", help="Pega aquí tu clave de Google AI Studio")
+    st.header("🔑 Estado de la API")
+    st.success("API Key configurada de forma fija ✅")
     
     st.divider()
     st.header("🕒 Gestión de Sesión")
@@ -36,12 +42,12 @@ with st.sidebar:
     """)
 
 # Verificar si se ingresó la API Key
-if not gemini_key:
-    st.warning("⚠️ Por favor ingresa tu API Key de Gemini en la barra lateral para iniciar el chat.")
+if not gemini_key or gemini_key == "PEGA_AQUÍ_TU_API_KEY_DE_GEMINI":
+    st.warning("⚠️ Por favor ingresa tu API Key real dentro del código en la variable `gemini_key`.")
     st.stop()
 
 # ---------------------------------------------------------
-# INICIALIZAR CLIENTE Y CHAT CON CACHÉ (Modelo actualizado)
+# INICIALIZAR CLIENTE Y CHAT CON CACHÉ
 # ---------------------------------------------------------
 @st.cache_resource
 def get_gemini_client(api_key):
@@ -53,7 +59,6 @@ if "messages" not in st.session_state:
     st.session_state.messages = []
 
 if "chat_session" not in st.session_state:
-    # Actualizado al modelo actual recomendado por Google AI Studio
     st.session_state.chat_session = client_ai.chats.create(model="gemini-3.8-flash")
 
 # Renderizar el historial de mensajes en la interfaz de chat
