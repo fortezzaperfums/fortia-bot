@@ -16,7 +16,7 @@ st.subheader("Ingeniería inversa de videos virales + Plantillas de guiones por 
 # ---------------------------------------------------------
 # API KEY FIJA
 # ---------------------------------------------------------
-gemini_key = "AQ.Ab8RN6KqtQH1G_UMEsV9n3agov-cVxG-5RdHFYMxBqT-55s-Ew"
+gemini_key = "AQ.Ab8RN6IgRY9SYPAeKuG6mbhGO_gMMb0IziI6FrTGdt3ZyBsnFQ"
 
 # ---------------------------------------------------------
 # BARRA LATERAL (HISTORIAL DE IDEAS Y GESTIÓN)
@@ -78,7 +78,6 @@ if "chat_session" not in st.session_state:
 for i, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
-        # Si es respuesta del asistente, agregamos un botón de descarga discreto
         if message["role"] == "assistant":
             st.download_button(
                 label="📥 Descargar Guion (Exportar a PDF / TXT)",
@@ -117,14 +116,12 @@ if prompt := st.chat_input("Ej: 'Analiza la estructura de este video...' o 'Dame
             
             st.markdown(bot_response)
             
-            # Botón de descarga para la respuesta recién generada
             st.download_button(
                 label="📥 Descargar Guion (Exportar a PDF / TXT)",
                 data=bot_response,
-                file_name=f"guion_fortezza_nuevo.txt",
+                file_name="guion_fortezza_nuevo.txt",
                 mime="text/plain",
                 key="download_new"
             )
             
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
-    st.rerun()
