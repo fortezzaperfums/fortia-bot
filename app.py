@@ -14,20 +14,20 @@ st.title("🎬 Bot de Ingeniería de Contenido & Guiones — Fortezza Perfums")
 st.subheader("Ingeniería inversa de videos virales + Plantillas de guiones por demanda")
 
 # ---------------------------------------------------------
-# OBTENER API KEY DESDE SECRETOS O BARRA LATERAL
+# CARGAR LA API KEY DE FORMA AUTOMÁTICA DESDE LOS SECRETOS
 # ---------------------------------------------------------
-# Intenta obtener la clave desde los secretos de Streamlit
-gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
+try:
+    gemini_api_key = st.secrets["GEMINI_API_KEY"]
+except Exception:
+    gemini_api_key = None
 
+# Barra lateral para el historial y estado
 with st.sidebar:
     st.header("🔑 Estado de la API")
-    if not gemini_api_key:
-        gemini_api_key = st.text_input("Gemini API Key", type="password", help="Pega aquí tu clave si no está configurada en Secrets")
-    
     if gemini_api_key:
-        st.success("API Key cargada correctamente ✅")
+        st.success("API Key cargada automáticamente ✅")
     else:
-        st.warning("⚠️ Sin API Key")
+        st.error("⚠️ Falta configurar la API Key en los secretos.")
         
     st.divider()
     st.header("📁 Historial de Ideas")
@@ -58,7 +58,6 @@ with st.sidebar:
     """)
 
 if not gemini_api_key:
-    st.info("👉 Ingresa tu API Key de Gemini en la barra lateral para comenzar.")
     st.stop()
 
 # Configurar la API de Gemini
@@ -86,13 +85,13 @@ try:
     if "chat" not in st.session_state:
         st.session_state.chat = model.start_chat(history=[])
 except Exception as e:
-    st.error(f"Error al inicializar la API Key: {e}")
+    st.error(f"Error al inicializar el modelo: {e}")
     st.stop()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Renderizar historial
+# Renderizar historial y botones de descarga
 for i, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -131,4 +130,4 @@ if prompt := st.chat_input("Ej: 'Analiza la estructura de este video...' o 'Dame
                 )
                 st.session_state.messages.append({"role": "assistant", "content": bot_response})
             except Exception as err:
-                st.error(f"Error de autenticación o conexión con Gemini: {err}")
+                st.error(f"Error al generar la respuesta: {err}")
