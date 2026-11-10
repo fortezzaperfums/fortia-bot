@@ -14,18 +14,31 @@ st.title("🎬 Bot de Ingeniería de Contenido & Guiones — Fortezza Perfums")
 st.subheader("Ingeniería inversa de videos virales + Plantillas de guiones por demanda")
 
 # ---------------------------------------------------------
-# API KEY FIJA (Ya no te la pedirá en pantalla)
+# API KEY FIJA
 # ---------------------------------------------------------
-# Pega tu clave de Google AI Studio dentro de las comillas:
 gemini_key = "AQ.Ab8RN6KqtQH1G_UMEsV9n3agov-cVxG-5RdHFYMxBqT-55s-Ew"
 
 # ---------------------------------------------------------
-# BARRA LATERAL (GESTIÓN DE SESIÓN)
+# BARRA LATERAL (HISTORIAL DE IDEAS Y GESTIÓN)
 # ---------------------------------------------------------
 with st.sidebar:
     st.header("🔑 Estado de la API")
-    st.success("API Key configurada de forma fija ✅")
+    st.success("API Key configurada ✅")
     
+    st.divider()
+    st.header("📁 Historial de Ideas")
+    
+    # Mostrar las ideas/preguntas anteriores en el panel izquierdo
+    if "messages" in st.session_state and st.session_state.messages:
+        user_queries = [m["content"] for m in st.session_state.messages if m["role"] == "user"]
+        if user_queries:
+            for idx, query in enumerate(user_queries):
+                st.markdown(f"**{idx+1}.** {query[:35]}...")
+        else:
+            st.info("Aún no hay ideas registradas.")
+    else:
+        st.info("El historial aparecerá aquí.")
+
     st.divider()
     st.header("🕒 Gestión de Sesión")
     if st.button("➕ Nueva Conversación", use_container_width=True):
@@ -37,11 +50,11 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("### 💡 ¿Cómo usar este Bot?")
     st.markdown("""
-    * **Modo Reingeniería:** Pásale la transcripción, idea o estructura de un video y pídele que extraiga su ingeniería para adaptarlo a tus perfumes.
-    * **Modo Banco de Ideas:** Pídele lotes de ideas (ej: *"Dame 5 ideas de Reels con estructuras virales"*).
+    * **Modo Reingeniería:** Pásale la transcripción o estructura de un video para adaptarlo a tus perfumes.
+    * **Modo Banco de Ideas:** Pide lotes de ideas con estructuras virales listas.
     """)
 
-# Verificar si se ingresó la API Key
+# Verificar API Key
 if not gemini_key or gemini_key == "PEGA_AQUÍ_TU_API_KEY_DE_GEMINI":
     st.warning("⚠️ Por favor ingresa tu API Key real dentro del código en la variable `gemini_key`.")
     st.stop()
@@ -61,10 +74,19 @@ if "messages" not in st.session_state:
 if "chat_session" not in st.session_state:
     st.session_state.chat_session = client_ai.chats.create(model="gemini-3.8-flash")
 
-# Renderizar el historial de mensajes en la interfaz de chat
-for message in st.session_state.messages:
+# Renderizar el historial de mensajes y agregar botón de descarga ultraligero a cada respuesta
+for i, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
+        # Si es respuesta del asistente, agregamos un botón de descarga discreto
+        if message["role"] == "assistant":
+            st.download_button(
+                label="📥 Descargar Guion (Exportar a PDF / TXT)",
+                data=message["content"],
+                file_name=f"guion_fortezza_{i}.txt",
+                mime="text/plain",
+                key=f"download_hist_{i}"
+            )
 
 # ---------------------------------------------------------
 # ENTRADA DE TEXTO (TIPO CHAT ABAJO)
@@ -95,4 +117,14 @@ if prompt := st.chat_input("Ej: 'Analiza la estructura de este video...' o 'Dame
             
             st.markdown(bot_response)
             
+            # Botón de descarga para la respuesta recién generada
+            st.download_button(
+                label="📥 Descargar Guion (Exportar a PDF / TXT)",
+                data=bot_response,
+                file_name=f"guion_fortezza_nuevo.txt",
+                mime="text/plain",
+                key="download_new"
+            )
+            
     st.session_state.messages.append({"role": "assistant", "content": bot_response})
+    st.rerun()
