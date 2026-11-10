@@ -43,8 +43,6 @@ with st.sidebar:
     st.header("🕒 Gestión de Sesión")
     if st.button("➕ Nueva Conversación", use_container_width=True):
         st.session_state.messages = []
-        if "chat_session" in st.session_state:
-            del st.session_state.chat_session
         st.rerun()
         
     st.markdown("---")
@@ -60,7 +58,7 @@ if not gemini_key or gemini_key == "PEGA_AQUÍ_TU_API_KEY_DE_GEMINI":
     st.stop()
 
 # ---------------------------------------------------------
-# INICIALIZAR CLIENTE Y CHAT CON CACHÉ
+# INICIALIZAR CLIENTE DE GEMINI
 # ---------------------------------------------------------
 @st.cache_resource
 def get_gemini_client(api_key):
@@ -71,10 +69,7 @@ client_ai = get_gemini_client(gemini_key)
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "chat_session" not in st.session_state:
-    st.session_state.chat_session = client_ai.chats.create(model="gemini-3.8-flash")
-
-# Renderizar el historial de mensajes y agregar botón de descarga ultraligero a cada respuesta
+# Renderizar el historial de mensajes y agregar botón de descarga a cada respuesta
 for i, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -109,9 +104,13 @@ if prompt := st.chat_input("Ej: 'Analiza la estructura de este video...' o 'Dame
             Estructura siempre tus salidas en tablas o pasos limpios manteniendo un tono ultra profesional y estratégico.
             """
             
-            full_prompt = f"{system_instruction}\n\nSolicitud del usuario: {prompt}"
+            full_prompt = f"{system_instruction}\n\nHistorial y Solicitud del usuario: {prompt}"
             
-            response = st.session_state.chat_session.send_message(full_prompt)
+            # Usamos el modelo estable gemini-2.0-flash directamente
+            response = client_ai.models.generate_content(
+                model="gemini-2.0-flash",
+                contents=full_prompt
+            )
             bot_response = response.text
             
             st.markdown(bot_response)
