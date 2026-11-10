@@ -77,8 +77,9 @@ Estructura siempre tus salidas en tablas o pasos limpios manteniendo un tono ult
 """
 
 try:
+    # Actualizado al modelo estándar y compatible gemini-2.0-flash
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-2.0-flash",
         system_instruction=system_instruction
     )
 
