@@ -14,20 +14,21 @@ st.title("🎬 Bot de Ingeniería de Contenido & Guiones — Fortezza Perfums")
 st.subheader("Ingeniería inversa de videos virales + Plantillas de guiones por demanda")
 
 # ---------------------------------------------------------
-# API KEY FIJA
+# OBTENER API KEY DESDE SECRETOS O BARRA LATERAL
 # ---------------------------------------------------------
-GEMINI_API_KEY = "AQ.Ab8RN6IgRY9SYPAeKuG6mbhGO_gMMb0IziI6FrTGdt3ZyBsnFQ"
+# Intenta obtener la clave desde los secretos de Streamlit
+gemini_api_key = st.secrets.get("GEMINI_API_KEY", "")
 
-# Configurar la API de Gemini
-genai.configure(api_key=GEMINI_API_KEY)
-
-# ---------------------------------------------------------
-# BARRA LATERAL (HISTORIAL DE IDEAS Y GESTIÓN)
-# ---------------------------------------------------------
 with st.sidebar:
     st.header("🔑 Estado de la API")
-    st.success("API Key configurada ✅")
+    if not gemini_api_key:
+        gemini_api_key = st.text_input("Gemini API Key", type="password", help="Pega aquí tu clave si no está configurada en Secrets")
     
+    if gemini_api_key:
+        st.success("API Key cargada correctamente ✅")
+    else:
+        st.warning("⚠️ Sin API Key")
+        
     st.divider()
     st.header("📁 Historial de Ideas")
     
@@ -56,15 +57,16 @@ with st.sidebar:
     * **Modo Banco de Ideas:** Pide lotes de ideas con estructuras virales listas.
     """)
 
-# Verificar API Key
-if not GEMINI_API_KEY or GEMINI_API_KEY == "PEGA_AQUÍ_TU_API_KEY_DE_GEMINI":
-    st.warning("⚠️ Por favor ingresa tu API Key real dentro del código en la variable `GEMINI_API_KEY`.")
+if not gemini_api_key:
+    st.info("👉 Ingresa tu API Key de Gemini en la barra lateral para comenzar.")
     st.stop()
+
+# Configurar la API de Gemini
+genai.configure(api_key=gemini_api_key)
 
 # ---------------------------------------------------------
 # INICIALIZAR EL MODELO Y EL CHAT
 # ---------------------------------------------------------
-# Usamos un rol de sistema incorporado para que mantenga siempre el perfil de experto
 system_instruction = """
 Eres un Director experto en Ingeniería de Contenido, Neuro-copywriting y Retención para marcas de comercio electrónico de alta gama (específicamente perfumería como Fortezza Perfums).
 Tu especialidad es diseccionar por qué los videos en Instagram funcionan (su estructura psicológica, ganchos de curiosidad/autoridad, ritmo y CTA) y replicar esas fórmulas de dos formas cuando el usuario te lo pida:
@@ -75,19 +77,22 @@ Tu especialidad es diseccionar por qué los videos en Instagram funcionan (su es
 Estructura siempre tus salidas en tablas o pasos limpios manteniendo un tono ultra profesional y estratégico.
 """
 
-# Configurar el modelo con instrucciones de sistema
-model = genai.GenerativeModel(
-    model_name="gemini-1.5-flash",
-    system_instruction=system_instruction
-)
+try:
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        system_instruction=system_instruction
+    )
 
-if "chat" not in st.session_state:
-    st.session_state.chat = model.start_chat(history=[])
+    if "chat" not in st.session_state:
+        st.session_state.chat = model.start_chat(history=[])
+except Exception as e:
+    st.error(f"Error al inicializar la API Key: {e}")
+    st.stop()
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Renderizar el historial de mensajes
+# Renderizar historial
 for i, message in enumerate(st.session_state.messages):
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
@@ -101,7 +106,7 @@ for i, message in enumerate(st.session_state.messages):
             )
 
 # ---------------------------------------------------------
-# ENTRADA DE TEXTO (TIPO CHAT ABAJO)
+# ENTRADA DE CHAT
 # ---------------------------------------------------------
 if prompt := st.chat_input("Ej: 'Analiza la estructura de este video...' o 'Dame 5 ideas de Reels para perfumes'"):
     
@@ -111,19 +116,19 @@ if prompt := st.chat_input("Ej: 'Analiza la estructura de este video...' o 'Dame
 
     with st.chat_message("assistant"):
         with st.spinner("Analizando ingeniería de video y estructurando guiones..."):
-            
-            # Enviar mensaje al chat con memoria integrada
-            response = st.session_state.chat.send_message(prompt)
-            bot_response = response.text
-            
-            st.markdown(bot_response)
-            
-            st.download_button(
-                label="📥 Descargar Guion (Exportar a PDF / TXT)",
-                data=bot_response,
-                file_name="guion_fortezza_nuevo.txt",
-                mime="text/plain",
-                key="download_new"
-            )
-            
-    st.session_state.messages.append({"role": "assistant", "content": bot_response})
+            try:
+                response = st.session_state.chat.send_message(prompt)
+                bot_response = response.text
+                
+                st.markdown(bot_response)
+                
+                st.download_button(
+                    label="📥 Descargar Guion (Exportar a PDF / TXT)",
+                    data=bot_response,
+                    file_name="guion_fortezza_nuevo.txt",
+                    mime="text/plain",
+                    key="download_new"
+                )
+                st.session_state.messages.append({"role": "assistant", "content": bot_response})
+            except Exception as err:
+                st.error(f"Error de autenticación o conexión con Gemini: {err}")
